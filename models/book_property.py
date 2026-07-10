@@ -20,5 +20,5 @@ class BookProperty(models.Model):
     @api.depends('copies', 'borrow_ids.state')
     def _compute_available_copies(self):
         for record in self:
-            borrowed_count = len(record.borrow_ids.filtered(lambda b: b.state == 'borrowed'))
+            borrowed_count = len(record.borrow_ids.filter_borrowed())
             record.available_copies = record.copies - borrowed_count
