@@ -1,4 +1,5 @@
 from odoo import models, fields, api
+from odoo.exceptions import ValidationError
 
 
 class BookProperty(models.Model):
@@ -22,3 +23,16 @@ class BookProperty(models.Model):
         for record in self:
             borrowed_count = len(record.borrow_ids.filtered(lambda b: b.state == 'borrowed'))
             record.available_copies = record.copies - borrowed_count
+
+    @api.constrains('copies', 'borrow_ids')
+    def _check_copies(self):
+        for record in self:
+            if record.copies < 0:
+                raise ValidationError("The number of copies cannot be negative.")
+
+            borrowed_count = len(record.borrow_ids.filtered(lambda b: b.state == 'borrowed'))
+            if record.copies < borrowed_count:
+                raise ValidationError(
+                    "Cannot set total copies (%s) below the number of currently "
+                    "borrowed copies (%s)." % (record.copies, borrowed_count)
+                )
